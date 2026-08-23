@@ -13,18 +13,29 @@ loop. Target: AIGEN Sciences **role ① Drug Development AI Engineer**.
 
 Five amendments were needed. Each is a correction of fact, not taste.
 
-**1. Positioning conflict — resolved by user decision, recorded honestly.**
-`../../PLAN.md` (approved 2026-08-20) targets **role ② LLM & Clinical AI Engineer** and lists
-under *Explicitly out of scope*: "No RDKit / DeepChem / molecular work. That serves role ① and
-dilutes the story." `../../research/role-fit.md` rates role ① **"Fit: weak"** — no RDKit, no PyG,
-no MD/docking — and notes it is the referrer's own territory (PepTri, EquiCPI).
-`../../outreach/ngoc-quang.md` is still **DRAFT — not sent**, so nothing has reversed that
-analysis. On 2026-08-23 the user chose to make this the **primary** side project anyway. That
-decision stands; the risk is stated once here and not re-litigated.
-*Mitigation that follows from it:* do not compete on generative chemistry, where the referrer and
-DMIS chemistry PhDs are ahead. Compete on **evaluation integrity in the low-label regime** —
-scaffold-split honesty, leakage tests with teeth, seeded error bars, calibration. That is the
-candidate's actual edge (see #3) and it is un-crowded.
+**1. Positioning — this is now the targeted role, confirmed from inside.**
+`../../PLAN.md` (approved 2026-08-20) targeted **role ② LLM & Clinical AI Engineer** and put
+molecular work explicitly out of scope; `../../research/role-fit.md` rated role ① *"Fit: weak"*.
+On **2026-08-23 Ngoc-Quang Nguyen (AI Principal Researcher, AIGEN) confirmed role ① is the role
+with headcount and offered a referral** (`../../outreach/ngoc-quang.md`). Role ② was not reported
+as open. So the earlier analysis was right about fit and irrelevant about targeting: fit does not
+matter for a seat that does not exist. The campaign is retargeted to ① and **this project is the
+portfolio evidence for it**, not a hedge.
+
+Three consequences for this plan specifically:
+
+- *The competitive line stands, and matters more now.* The referrer is a DMIS-trained molecular
+  generative-modeling researcher (PepTri, EquiCPI). Do not compete on generative chemistry. Compete
+  on **evaluation integrity in the low-label regime** — scaffold-split honesty, leakage tests with
+  teeth, seeded error bars, calibration — which is transferred from `../../../Care/` and is
+  uncrowded in this literature.
+- *Phase 4 is promoted from "optional if time" to "the highest-value stretch".* Role ① names
+  closed-loop optimization, LLM/agent orchestration, and MD/docking as preferred qualifications. A
+  minimal generate → predict → select loop with a docking oracle touches three of them at once. It
+  is still last, still boxed, and still governed by the framing rule (§Phase 4).
+- *The uncovered half is now visible.* Role ① pairs "which target" with "which molecule". The
+  target-discovery side (KG / GNN / causal, omics) has no project. Either build a minimal version
+  or cede it openly in the SoP — do not let a reader assume it is covered.
 
 **2. The source doc mislabels itself.** Its heading reads
 "PART 1 — Foundation Knowledge Roadmap (Direction #1 — this project)". This project is
@@ -139,9 +150,11 @@ measured properly"*, never *"SSL wins"*.
 and a selective-prediction (coverage vs accuracy) curve. Cheap, and it is the drug-discovery-real
 part most benchmark repos skip.
 
-### Phase 4 — OPTIONAL generation loop (2–4 wk, boxed)
+### Phase 4 — Generation loop (2–4 wk, boxed but now the top stretch goal)
 
-Only after Phase 3 is written up. generate → predict (Phase-3 model) → select, benchmarked for
+Promoted from "only if time" by the role-① retarget (§Context 1): it is the single cheapest way to
+touch closed-loop optimization, agent orchestration, and docking at once. Still gated —
+**only after Phase 3 is written up.** generate → predict (Phase-3 model) → select, benchmarked for
 **sample efficiency under a fixed oracle budget** on TDC PMO (Gao et al. 2022). Docking oracle
 optional. **Framing rule: claim sample efficiency of the loop, never "my agent found good
 molecules"** — the latter invites the oracle-hacking critique and cannot be defended.
@@ -170,8 +183,11 @@ molecules"** — the latter invites the oracle-hacking critique and cannot be de
 | **Core (0–3)** | **~5–7 focused weeks** |
 | 4 Generation (optional) | +2–4 wk |
 
-Part-time calendar ≈ 2×. Note against `../../PLAN.md`'s ~6-week window: the core alone consumes it.
-Phase 4 is not in the budget.
+Part-time calendar ≈ 2×. The core alone consumes `../../PLAN.md`'s ~6-week window, so Phase 4 does
+not fit it — but the referral changes what "done" means: what has to exist when he refers is one
+**honest headline result**, not five finished phases. Practical sequencing under a live referral:
+Phase 0–2 plus a single-dataset Phase 3 label-budget curve with real error bars (~3 weeks) is a
+showable artifact; the remaining datasets, methods, and Phase 4 continue after applying.
 
 ## Agentic-coding failure modes to guard (from the source doc, kept verbatim in intent)
 
