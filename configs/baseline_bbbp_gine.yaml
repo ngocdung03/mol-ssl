@@ -1,0 +1,21 @@
+# Supervised GINE baseline. Every run needs a config; nothing defaults silently.
+dataset: BBBP          # BBBP | BACE | Tox21 | Lipophilicity
+task: classification   # classification | regression
+n_tasks: 1
+split: scaffold        # ONLY legal value (src/datamodule.require_scaffold_split)
+split_frac: [0.8, 0.1, 0.1]
+split_manifest: data/splits/bbbp_scaffold.json
+label_budget: 1.0      # fraction of the scaffold-train split that keeps its labels
+seeds: [0, 1, 2, 3, 4] # >=5, reported as mean +/- std; never a best seed
+model:
+  hidden: 300
+  layers: 5
+  dropout: 0.1
+train:
+  epochs: 100
+  batch_size: 32
+  lr: 1.0e-3
+  weight_decay: 0.0
+  amp: fp16            # T4 sm_75: no bf16
+ssl:
+  method: none         # none | pretrain | contrastive | consistency | pseudolabel
