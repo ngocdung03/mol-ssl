@@ -1,5 +1,6 @@
-run_tag,script,dataset,n_molecules,steps,seed,final_train_loss,passed,git,task,split,label_budget,ssl_method,n_seeds,test_auroc_mean,test_auroc_std,test_ece_mean,n_train
-0825_1609_overfit_check,overfit100,BBBP,100,400,0,0.00291964178904891,True,859fa9f,,,,,,,,,
-0825_1617_tox21_ecfp_rf,run_ecfp_baseline,Tox21,,,,,,28407e2,classification,scaffold,1.0,none_ecfp4_rf,5,0.6976974986396896,0.001748355485680924,0.013898551447033548,6258
-0825_1622_bbbp_ecfp_rf,run_ecfp_baseline,BBBP,,,,,,e20bff8,classification,scaffold,1.0,none_ecfp4_rf,5,0.7971414845063656,0.007182280272748538,0.0727550116713352,1631
-0825_1622_bace_ecfp_rf,run_ecfp_baseline,BACE,,,,,,04087af,classification,scaffold,1.0,none_ecfp4_rf,5,0.9174467150076906,0.004184725180778869,0.0843032926065163,1210
+run_tag,script,dataset,n_molecules,steps,seed,final_train_loss,passed,git,task,split,label_budget,ssl_method,n_seeds,test_auroc_mean,test_auroc_std,test_ece_mean,n_train,test_rmse_mean,test_rmse_std
+0825_1609_overfit_check,overfit100,BBBP,100,400,0,0.00291964178904891,True,859fa9f,,,,,,,,,,,
+0825_1617_tox21_ecfp_rf,run_ecfp_baseline,Tox21,,,,,,28407e2,classification,scaffold,1.0,none_ecfp4_rf,5,0.6976974986396896,0.001748355485680924,0.013898551447033548,6258,,
+0825_1622_bbbp_ecfp_rf,run_ecfp_baseline,BBBP,,,,,,e20bff8,classification,scaffold,1.0,none_ecfp4_rf,5,0.7971414845063656,0.007182280272748538,0.0727550116713352,1631,,
+0825_1622_bace_ecfp_rf,run_ecfp_baseline,BACE,,,,,,04087af,classification,scaffold,1.0,none_ecfp4_rf,5,0.9174467150076906,0.004184725180778869,0.0843032926065163,1210,,
+0825_1623_lipo_ecfp_rf,run_ecfp_baseline,Lipo,,,,,,16cd3c9,regression,scaffold,1.0,none_ecfp4_rf,5,,,,3360,1.0277965283577948,0.0020155115515273067
