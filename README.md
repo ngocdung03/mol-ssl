@@ -1,79 +1,137 @@
-# mol-ssl — semi-supervised molecular property prediction
+# mol-ssl — how much does self-supervision buy you per label?
 
-Low-label molecular property prediction on scaffold-split MoleculeNet: how much does
-semi-supervised learning actually buy you *per label*, measured with splits and error bars that
-survive scrutiny.
+Low-label molecular property prediction on scaffold-split MoleculeNet, measured with splits, seeds,
+and leakage controls that survive scrutiny.
 
-**Status: scaffold + verified environment. No experimental results yet.** Every number in this
-README will trace to a `results/metrics_{run_tag}.json`. There are none, so there are no numbers.
-See [docs/plans/mol-ssl-plan.md](docs/plans/mol-ssl-plan.md) for phases and gates.
+The headline is a **null result**: on Tox21, attribute-mask pretraining does **not** produce a
+low-label advantage. Every gain below 100% labels sits inside the seed noise. That is reported
+here as the finding, because the question was "how much does pretraining buy per label", not
+"can we show pretraining winning".
 
-## The question
+Alongside it is a **positive result that does not depend on self-supervision working**: random
+splitting inflates Tox21 AUROC by **+0.084**, which is larger than most method improvements the
+benchmark is used to argue about.
 
-Assays are small; unlabeled molecules are effectively free. So the useful question is not "what is
-the best AUROC on Tox21" but **"how does the accuracy-per-label curve bend when you add
-self-supervision?"** — and whether the answer holds up under a Bemis–Murcko scaffold split, which
-is the honest stand-in for "a chemotype the model has never seen".
+## The two findings
 
-Headline deliverable: a **label-budget curve** (metric vs. fraction of labels kept, one line per
-method, ±1 std over ≥5 seeds), plus calibration and selective-prediction results.
+### 1. Random splitting inflates Tox21 AUROC by 8.4 points
 
-## Non-negotiables
+Identical model, identical data, identical seeds — only the split changes.
 
-1. Scaffold splits only. `require_scaffold_split()` errors on a missing or random split; there is
-   no random-split function in [src/splits.py](src/splits.py).
-2. The unlabeled pool is filtered against every downstream val/test scaffold before it touches
-   disk — and [tests/test_leakage.py](tests/test_leakage.py) **fails when the filter is disabled**
-   (verified by mutation, not by assertion theatre).
-3. No fabricated metrics. Real run, or say it didn't run.
-4. Fixed seeds, mean ± std over ≥5 seeds, one row per run in `artifacts/experiments.csv`.
-5. Claims written before the sweep. A null result — SSL gains inside seed noise — gets reported as
-   a null result.
+| Split | Tox21 test AUROC (5 seeds) |
+|---|---|
+| Bemis–Murcko scaffold | 0.7383 ± 0.0070 |
+| Random | 0.8226 ± 0.0146 |
+| **Inflation** | **+0.0843 ± 0.0140** |
 
-## Setup
+Positive on every seed (+0.066 to +0.102). A random split lets molecules sharing a scaffold land on
+both sides of the train/test boundary, so the model gets credit for recognizing chemotypes it
+trained on. Full writeup: [results/FINDING_split_inflation.md](results/FINDING_split_inflation.md).
+
+### 2. Pretraining shows no low-label advantage on Tox21
+
+5 budgets × 2 arms × 5 seeds = 50 trainings. Both arms see the **same labeled subsample** at each
+budget; the only difference is whether the encoder was pretrained on 239k scaffold-filtered
+ZINC250k molecules.
+
+| Label budget | n_train | Supervised | Pretrained | Delta | Verdict |
+|---|---|---|---|---|---|
+| 5% | 313 | 0.6310 ± 0.0276 | 0.6342 ± 0.0221 | +0.0032 | inside seed noise |
+| 10% | 626 | 0.6627 ± 0.0238 | 0.6672 ± 0.0205 | +0.0045 | inside seed noise |
+| 25% | 1564 | 0.6863 ± 0.0286 | 0.6784 ± 0.0197 | −0.0079 | inside seed noise |
+| 50% | 3129 | 0.7223 ± 0.0145 | 0.7227 ± 0.0090 | +0.0004 | inside seed noise |
+| 100% | 6258 | 0.7249 ± 0.0205 | 0.7502 ± 0.0107 | +0.0253 | exceeds seed noise |
+
+![label budget curve](results/label_budget_tox21_0825_1756_tox21_sweep.png)
+
+The hypothesis was that the advantage would widen as labels shrink. It did not — the only gap that
+clears the noise is at *full* labels, where self-supervision was expected to matter least. Full
+writeup, including why this is a result about the method rather than a broken harness:
+[results/FINDING_label_budget.md](results/FINDING_label_budget.md).
+
+## The leakage number worth knowing
+
+Filtering ZINC250k against every downstream validation and test scaffold removed **10,335 of
+249,455 molecules (4.14%)**. Those molecules share Bemis–Murcko scaffolds with the evaluation sets.
+A pretraining pipeline that skips this step trains on test chemotypes and can report a low-label
+"advantage" that this experiment does not find once the contamination is gone.
+
+Verified three ways: the filter itself, an in-pipeline re-check that refuses to write a dirty pool,
+and an independent post-hoc check on 20,000 random pool molecules against 2,881 banned
+scaffolds — 0 leaks.
+
+## Supervised baselines (scaffold split, 5 seeds)
+
+| Dataset | GINE (this work) | ECFP4+RF | Winner |
+|---|---|---|---|
+| Tox21 | **0.7383 ± 0.0098** AUROC | 0.6977 ± 0.0017 | GINE +0.041 |
+| Lipophilicity | **0.8254 ± 0.0332** RMSE | 1.0278 ± 0.0020 | GINE −0.202 |
+| BBBP | 0.6891 ± 0.0730 AUROC | **0.7971 ± 0.0072** | ECFP +0.108 |
+| BACE | 0.8199 ± 0.0260 AUROC | **0.9174 ± 0.0042** | ECFP +0.098 |
+
+The graph network wins the two larger datasets and **loses both smaller ones** — and on BBBP its
+seed spread (±0.073) is ten times the fingerprint's. A 5-layer GINE trained from scratch on ~1.5k
+molecules has more parameters than supervision. That is reported rather than hidden, and it is what
+makes the low-label question worth asking in the first place.
+
+Full table with published reference values: [results/RESULTS.md](results/RESULTS.md).
+
+## Non-negotiables, enforced in code
+
+1. **Scaffold splits only.** `require_scaffold_split()` raises on a missing or random split, and
+   there is no random-split function in [src/splits.py](src/splits.py). The random split used for
+   the inflation study lives in a quarantined module whose manifests the production loader
+   **refuses** to read.
+2. **The unlabeled pool is filtered before it touches disk**, and
+   [tests/test_leakage.py](tests/test_leakage.py) **fails when the filter is disabled** — verified
+   by mutation via [scripts/verify_leakage_teeth.sh](scripts/verify_leakage_teeth.sh), not by
+   assertion alone.
+3. **No fabricated metrics.** Every number above is generated by
+   [scripts/make_results_table.py](scripts/make_results_table.py), which reads only
+   `results/metrics_{run_tag}.json` files produced by actual runs.
+4. **Fixed seeds, mean ± std over 5 seeds**, one row per run in `artifacts/experiments.csv`.
+   Never a best epoch, never a best seed.
+5. **Claims written before the sweep.** The null result above is what that policy is for.
+
+## Reproduce
 
 ```bash
-conda env create -f environment.yml     # env `molssl`; torch 2.6.0+cu124, PyG 2.6.1, RDKit 2024.9.6
-conda activate molssl
-python -m pytest                        # 14 tests
-python scripts/smoke.py                 # SMILES -> graph -> GINE forward pass on GPU
-python scripts/overfit100.py --kw overfit_check   # Phase-0 gate: overfit 100 molecules
+conda env create -f environment.yml && conda activate molssl
+python -m pytest                                    # 51 tests
+python scripts/make_splits.py                       # committed scaffold manifests
+python scripts/run_baseline.py --config configs/baseline_tox21_gine.yaml --kw tox21_sup
+python scripts/run_split_comparison.py --config configs/baseline_tox21_gine.yaml --kw splitgap
 ```
 
-Verified on 2× Tesla T4 (sm_75 — fp16/fp32 only, no bf16), CUDA 12.4.
+For the full sweep, build the pool and pretrain first:
 
-## Layout
+```bash
+python scripts/build_pool.py --from-file data/raw/zinc250k.smi --kw pool
+python scripts/run_pretrain.py --pool data/pool/zinc250k_filtered.txt --kw pretrain
+python scripts/run_label_budget_sweep.py --config configs/labelbudget_tox21.yaml \
+    --checkpoint artifacts/encoder_pretrained.pt --kw sweep
+```
 
-| Path | What |
-|---|---|
-| `src/featurize.py` | RDKit SMILES → PyG graph tensors (explicit atom/bond feature scheme) |
-| `src/splits.py` | Bemis–Murcko scaffolds, deterministic scaffold split, committed split manifests |
-| `src/datamodule.py` | Split enforcement, label-budget subsampling, unlabeled-pool scaffold filter |
-| `src/runlog.py` | Mandatory `--kw` run tags, per-run metrics JSON, append-only ledger |
-| `src/models/gnn.py` | GINE encoder + prediction head |
-| `src/ssl/` | Pretrain / contrastive / consistency / pseudo-label — one interface (**M3, stubs**) |
-| `configs/` | One YAML per experiment; ablations are config flips |
-| `data/splits/` | Cached scaffold splits, committed — single source of truth |
-| `tests/` | Featurization, split integrity, leakage regression |
+Verified on 2× Tesla T4 (sm_75 — fp16/fp32 only, no bf16), CUDA 12.4, torch 2.6.0, PyG 2.6.1,
+RDKit 2024.09.6.
 
-## Baselines
+## Limitations
 
-ECFP4-2048 + RandomForest, ECFP4 + XGBoost, and an own PyG GINE, all on scaffold splits.
-Chemprop D-MPNN numbers are **cited from publication, not reproduced here** — labeled as such in
-every table.
+- The null result covers **one dataset, one method, one pool**. Contrastive (MolCLR-style),
+  consistency regularization, and pseudo-labeling remain unimplemented stubs under `src/ssl/`.
+- Pretraining ran 20 epochs on a ~250k pool, capped by the T4 budget — well below the ChEMBL-scale
+  pretraining in the literature. A larger pool or longer schedule may behave differently.
+- Fine-tuning used one fixed learning rate for both arms. Tuning the pretrained arm alone is a
+  standard way to manufacture a difference, so it was not done.
+- The "exceeds seed noise" test compares a delta against pooled seed standard deviation. It is a
+  descriptive threshold, not a hypothesis test with multiplicity control across five budgets.
+- Numbers here are **not** directly comparable to published Chemprop values: this repo uses its own
+  deterministic Bemis–Murcko split, and split implementations differ in tie-handling and balancing
+  enough to shift test-set class balance materially (see
+  [results/SPLIT_DIAGNOSTICS.md](results/SPLIT_DIAGNOSTICS.md)).
 
 ## Method sources
 
-Hu et al. 2020 (pretraining strategies for GNNs) · MolCLR (contrastive molecular representations) ·
-Gao et al. 2022 (sample efficiency, for the optional generation loop) · MoleculeNet / Chemprop
-(Yang et al. 2019) for the benchmark protocol.
-
-## Limitations (kept current, deliberately)
-
-- SSL gains on MoleculeNet are frequently within seed noise once splits and seeds are handled
-  honestly. This repo is built to measure that faithfully rather than to win a leaderboard.
-- Unlabeled pool is capped at ~250k molecules by the T4 budget, well below the ChEMBL-scale
-  pretraining in the literature.
-- Small datasets (BBBP 2039, BACE 1513) cannot support a 1% label budget — 20 molecules is noise,
-  so their sweep starts at 10%.
-- `src/ssl/` is unimplemented (M3). Nothing in this repo yet demonstrates an SSL result.
+Hu et al. 2020 (pretraining strategies for GNNs — the implemented method) · MolCLR (contrastive
+molecular representations) · Yang et al. 2019 (Chemprop D-MPNN, cited for reference values, not
+reproduced) · MoleculeNet benchmark protocol.
