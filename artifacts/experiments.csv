@@ -11,3 +11,13 @@ run_tag,script,dataset,n_molecules,steps,seed,final_train_loss,passed,git,task,s
 0825_1646_pretrain_zinc250k,run_pretrain,pool,,,,,,ee5e412,,,,pretrain_attrmask,1,,,,239120,,,,0.03383896525509284,,
 0825_1709_lipo_gine_sup,run_baseline,Lipo,,,,,,ee5e412,regression,scaffold,1.0,none,5,,,,3360,0.8254167199134826,0.0332299406270323,,,,
 0825_1641_tox21_splitgap,run_split_comparison,Tox21,,,,,,ee5e412,classification,scaffold_vs_random,1.0,none,5,0.7383100474357213,0.007048613920780293,,,,,,,0.8225813548642774,0.08427130742855622
+0825_1756_tox21_sweep_none_0.05,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.05,none,5,0.6309835334600831,0.02760683256983696,,313,,,,,,
+0825_1756_tox21_sweep_none_0.1,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.1,none,5,0.6626713304498373,0.02375095586121745,,626,,,,,,
+0825_1756_tox21_sweep_none_0.25,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.25,none,5,0.6862553319690895,0.02863003351565105,,1564,,,,,,
+0825_1756_tox21_sweep_none_0.5,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.5,none,5,0.7222965509354153,0.014465269856668348,,3129,,,,,,
+0825_1756_tox21_sweep_none_1.0,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,1.0,none,5,0.7248514330400068,0.020531718847922542,,6258,,,,,,
+0825_1756_tox21_sweep_pretrain_0.05,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.05,pretrain,5,0.6341941096054412,0.022082052657160907,,313,,,,,,
+0825_1756_tox21_sweep_pretrain_0.1,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.1,pretrain,5,0.6672053991449947,0.020523714851693197,,626,,,,,,
+0825_1756_tox21_sweep_pretrain_0.25,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.25,pretrain,5,0.6783542596724127,0.01968234702016061,,1564,,,,,,
+0825_1756_tox21_sweep_pretrain_0.5,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,0.5,pretrain,5,0.7227431066243386,0.008967772222912895,,3129,,,,,,
+0825_1756_tox21_sweep_pretrain_1.0,run_label_budget_sweep,Tox21,,,,,,65a8bd5,classification,scaffold,1.0,pretrain,5,0.7501507668416549,0.010676101846079662,,6258,,,,,,
