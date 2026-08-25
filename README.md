@@ -6,7 +6,7 @@ survive scrutiny.
 
 **Status: scaffold + verified environment. No experimental results yet.** Every number in this
 README will trace to a `results/metrics_{run_tag}.json`. There are none, so there are no numbers.
-See [PLAN.md](PLAN.md) for phases and gates.
+See [docs/plans/mol-ssl-plan.md](docs/plans/mol-ssl-plan.md) for phases and gates.
 
 ## The question
 
