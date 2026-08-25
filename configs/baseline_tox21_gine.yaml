@@ -1,0 +1,22 @@
+# Supervised GINE baseline on Tox21 -- the Phase 1 gate run.
+dataset: Tox21
+task: classification
+n_tasks: 12
+split: scaffold        # ONLY legal value (src/datamodule.require_scaffold_split)
+split_frac: [0.8, 0.1, 0.1]
+split_manifest: data/splits/tox21_scaffold.json
+label_budget: 1.0
+seeds: [0, 1, 2, 3, 4]
+model:
+  hidden: 300
+  layers: 5
+  dropout: 0.1
+train:
+  epochs: 100
+  patience: 20
+  batch_size: 32
+  lr: 1.0e-3
+  weight_decay: 0.0
+  amp: fp16            # T4 sm_75: no bf16
+ssl:
+  method: none

@@ -64,3 +64,65 @@ def load_moleculenet(name: str, root: str | Path = "data/raw"):
     from torch_geometric.datasets import MoleculeNet
 
     return MoleculeNet(root=str(root), name=name)
+
+
+def dataset_graphs(name: str, root: str | Path = "data/raw") -> tuple[list, list[str], int]:
+    """MoleculeNet -> (graphs, smiles, n_dropped), index-aligned with the split manifest.
+
+    Index alignment is the whole contract here: manifests store integer indices into the PyG
+    dataset order, so an unparseable molecule must keep its slot rather than shifting every index
+    after it. Dropped entries become None and are filtered per-split, and the count is returned so
+    the caller reports it instead of losing it.
+    """
+    from src.featurize import mol_to_data
+
+    ds = load_moleculenet(name, root=root)
+    graphs, smiles, dropped = [], [], 0
+    for d in ds:
+        g = mol_to_data(d.smiles, y=d.y.view(-1).tolist())
+        if g is None:
+            dropped += 1
+        graphs.append(g)
+        smiles.append(d.smiles)
+    return graphs, smiles, dropped
+
+
+def split_subset(graphs: list, indices: list[int]) -> list:
+    """Graphs for a set of manifest indices, skipping any that failed to featurize."""
+    return [graphs[i] for i in indices if graphs[i] is not None]
+
+
+def build_loaders(cfg: dict, seed: int, root: str | Path = "data/raw"):
+    """Config + seed -> (train_loader, val_loader, test_loader, info).
+
+    The label budget is applied to the *training* indices only, so a low-label run never gains
+    access to validation or test chemotypes -- the budget shrinks supervision, not the split.
+    """
+    from torch_geometric.loader import DataLoader
+
+    from src.splits import load_split
+
+    require_scaffold_split(cfg)
+    manifest = load_split(cfg["split_manifest"])
+    graphs, _smiles, dropped = dataset_graphs(cfg["dataset"], root=root)
+
+    idx = manifest["indices"]
+    budget = float(cfg.get("label_budget", 1.0))
+    train_idx = label_budget_subsample(idx["train"], budget, seed) if budget < 1.0 else idx["train"]
+
+    train = split_subset(graphs, train_idx)
+    val = split_subset(graphs, idx["val"])
+    test = split_subset(graphs, idx["test"])
+
+    bs = int(cfg.get("train", {}).get("batch_size", 32))
+    info = {
+        "n_train": len(train), "n_val": len(val), "n_test": len(test),
+        "n_dropped_unparseable": dropped, "label_budget": budget,
+        "n_train_pool": len(idx["train"]),
+    }
+    return (
+        DataLoader(train, batch_size=bs, shuffle=True),
+        DataLoader(val, batch_size=bs),
+        DataLoader(test, batch_size=bs),
+        info,
+    )
