@@ -22,6 +22,25 @@ from src.eval import (
 from src.models.gnn import PropertyPredictor
 
 
+def load_pretrained_encoder(path: str, mcfg: dict) -> dict:
+    """Encoder weights from a pretraining checkpoint, with an architecture-match check.
+
+    Silently loading a mismatched encoder is the kind of bug that produces a plausible but
+    meaningless SSL comparison, so a mismatch raises instead of being coerced.
+    """
+    ckpt = torch.load(path, map_location="cpu", weights_only=False)
+    for field, default in (("hidden", 300), ("layers", 5)):
+        want = int(mcfg.get(field, default))
+        got = int(ckpt.get(field, want))
+        if want != got:
+            raise ValueError(
+                f"pretrained encoder {field}={got} but config asks for {field}={want}; "
+                f"refusing to load a mismatched encoder ({path})"
+            )
+    return ckpt["encoder_state"]
+
+
+
 def masked_bce(logits: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """BCE over labeled entries only. NaN targets are missing labels, not negatives."""
     mask = ~torch.isnan(y)
@@ -86,6 +105,15 @@ def train_one_seed(cfg: dict, seed: int, device: str | None = None, verbose: boo
         dropout=float(mcfg.get("dropout", 0.1)),
     ).to(device)
 
+    # SSL: load pretrained encoder weights, discard the pretraining head. The prediction head stays
+    # randomly initialized -- transferring it would leak the pretext task into the downstream one.
+    ckpt_path = cfg.get("ssl", {}).get("checkpoint")
+    if ckpt_path:
+        model.encoder.load_state_dict(load_pretrained_encoder(ckpt_path, mcfg))
+        info_pretrained = ckpt_path
+    else:
+        info_pretrained = None
+
     opt = torch.optim.Adam(
         model.parameters(),
         lr=float(tcfg.get("lr", 1e-3)),
@@ -140,4 +168,5 @@ def train_one_seed(cfg: dict, seed: int, device: str | None = None, verbose: boo
         f"val_{key}": best_val,
         "test": test,
         "data": info,
+        "pretrained_from": info_pretrained,
     }
