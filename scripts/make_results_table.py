@@ -83,6 +83,44 @@ def main() -> int:
             print(f"| {m['dataset']} | {key.upper()} | {fmt(m.get(f'scaffold_{key}'))} "
                   f"| {fmt(m.get(f'random_{key}'))} | {fmt(m.get('inflation'))} "
                   f"| {len(m['seeds'])} | `{m['run_tag']}` |")
+
+    print("\n## Label-budget sweeps (pretraining arms)\n")
+    sweeps = [json.loads(p.read_text()) for p in sorted(RESULTS.glob("metrics_*.json"))]
+    sweeps = [m for m in sweeps if m.get("script") == "run_label_budget_sweep"]
+    if not sweeps:
+        print("Not run yet.")
+    else:
+        print("Arms are encoder-initialization conditions; split, seeds and labeled subsample are")
+        print("held identical within a run. See `results/PRECLAIM_node_vs_graph.md` for the")
+        print("pre-registered thresholds.\n")
+        print("| Dataset | Metric | Arm | Budget | Value | Seeds | Run tag |")
+        print("|---|---|---|---|---|---|---|")
+        for m in sweeps:
+            key = m.get("metric", "auroc")
+            for arm, series in m["curve"].items():
+                for b in sorted(series, key=float):
+                    agg = series[b]
+                    pct = f"{float(b) * 100:g}%"
+                    print(f"| {m['dataset']} | {key.upper()} | {arm} | {pct} "
+                          f"| {fmt(agg)} | {len(m['seeds'])} | `{m['run_tag']}` |")
+
+        for m in sweeps:
+            if not m.get("interaction"):
+                continue
+            print(f"\n### 2x2 interaction, `{m['run_tag']}`\n")
+            print("`(node_graph - graph) - (node - none)`, equivalently")
+            print("`node_graph - (graph + node) + none`: how far the combined arm exceeds the")
+            print("additive prediction. Near zero means the two objectives contribute additively.")
+            print("This contrast is this study's construction -- the 2x2 layout is Hu et al.'s but")
+            print("they never compute an interaction. Their own Table 1 averages give +0.2, so a")
+            print("near-zero value replicates their result rather than contradicting it.\n")
+            print("| Budget | Interaction | Pooled std | Inside seed noise | Clears 2x pooled |")
+            print("|---|---|---|---|---|")
+            for b in sorted(m["interaction"], key=float):
+                d = m["interaction"][b]
+                print(f"| {float(b) * 100:g}% | {d['interaction']:+.4f} | {d['pooled_std']:.4f} "
+                      f"| {'yes' if d['inside_seed_noise'] else 'no'} "
+                      f"| {'yes' if d['exceeds_widened_threshold'] else 'no'} |")
     return 0
 
 

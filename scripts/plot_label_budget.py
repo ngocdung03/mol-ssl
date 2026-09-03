@@ -18,8 +18,17 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-ARM_LABEL = {"none": "supervised (random init)", "pretrain": "attribute-mask pretrained"}
-ARM_COLOR = {"none": "#B0413E", "pretrain": "#2B6C8F"}
+ARM_LABEL = {
+    "none": "supervised (random init)",
+    "pretrain": "attribute-mask pretrained",      # legacy alias for 'node'
+    "node": "node-level (attribute mask)",
+    "graph": "graph-level (PCBA supervised)",
+    "node_graph": "node + graph (Hu sequential)",
+}
+ARM_COLOR = {
+    "none": "#B0413E", "pretrain": "#2B6C8F", "node": "#2B6C8F",
+    "graph": "#E8A33D", "node_graph": "#4C8C4A",
+}
 
 
 def main() -> int:

@@ -65,3 +65,35 @@ def test_shipped_configs_are_valid():
     """The two committed configs must actually load -- they were aspirational until now."""
     for p in ("configs/baseline_bbbp_gine.yaml", "configs/labelbudget_tox21.yaml"):
         assert load_config(p)["split"] == "scaffold"
+
+
+def test_pcba_is_not_a_downstream_dataset(tmp_path):
+    """PCBA is a pretraining corpus, not an evaluation set.
+
+    It has no scaffold split manifest, needs no label budget, and is never evaluated. Whitelisting
+    it would force either a fabricated split_manifest or a weakened required-key check --
+    KNOWN_DATASETS lists what may be *evaluated on*. run_pretrain_graph.py therefore takes argparse
+    flags and never calls load_config, exactly as run_pretrain.py does.
+    """
+    from src.config import KNOWN_DATASETS
+
+    assert "PCBA" not in KNOWN_DATASETS
+    with pytest.raises(ValueError, match="dataset"):
+        load_config(_write(tmp_path, dict(BASE, dataset="PCBA")))
+
+
+def test_graph_pretrain_work_did_not_relax_downstream_invariants(tmp_path):
+    """Regression lock: the 2x2 extension must not have loosened any hard rule."""
+    # Rule 1: split still mandatory and still scaffold-only.
+    no_split = {k: v for k, v in BASE.items() if k != "split"}
+    with pytest.raises(ValueError):
+        load_config(_write(tmp_path, no_split))
+    with pytest.raises(ValueError):
+        load_config(_write(tmp_path, dict(BASE, split="random")))
+    # split_manifest still required.
+    no_manifest = {k: v for k, v in BASE.items() if k != "split_manifest"}
+    with pytest.raises(ValueError, match="split_manifest"):
+        load_config(_write(tmp_path, no_manifest))
+    # Rule 4: still >=5 seeds.
+    with pytest.raises(ValueError):
+        load_config(_write(tmp_path, dict(BASE, seeds=[0, 1, 2])))

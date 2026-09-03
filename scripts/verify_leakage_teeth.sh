@@ -19,12 +19,12 @@ old = """        scaf = scaffold_smiles(smi)
         if scaf is None or scaf in banned:
             dropped += 1
             continue
-        kept.append(smi)"""
+        kept.append(i)"""
 assert t.count(old) == 1, "mutation target not found -- update this script"
-p.write_text(t.replace(old, "        kept.append(smi)  # MUTATION: filter disabled"))
+p.write_text(t.replace(old, "        kept.append(i)  # MUTATION: filter disabled"))
 PY
 
-python -m pytest tests/test_leakage.py -q > /dev/null 2>&1
+python -m pytest tests/test_leakage.py tests/test_leakage_pcba.py -q > /dev/null 2>&1
 status=$?
 if [ $status -ne 0 ]; then
   echo "TEETH_OK: leakage test failed with the filter disabled, as it must"

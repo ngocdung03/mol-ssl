@@ -38,25 +38,39 @@ def label_budget_subsample(train_idx: list[int], budget: float, seed: int) -> li
     return sorted(rng.sample(list(train_idx), n))
 
 
-def filter_pool_by_scaffold(pool_smiles: list[str], manifests: list[dict]) -> tuple[list[str], int]:
-    """Drop any pool molecule whose Bemis-Murcko scaffold appears in a val/test split.
+def filter_pool_indices(pool_smiles: list[str], manifests: list[dict]) -> tuple[list[int], int]:
+    """Indices of pool molecules whose scaffold appears in NO val/test split.
 
-    Returns (kept, n_dropped). Unparseable pool SMILES are dropped too — an unknown scaffold cannot
-    be proven clean.
+    Index-returning sibling of `filter_pool_by_scaffold`, so a *labeled* corpus (e.g. the PCBA
+    graph-level pretraining panel) can be filtered without its labels having to round-trip through
+    a SMILES list. Same rule, same banned set: unparseable SMILES are dropped too, because an
+    unknown scaffold cannot be proven clean.
+
+    Returns (kept_indices, n_dropped).
     """
     banned: set[str] = set()
     for m in manifests:
         banned |= heldout_scaffolds(m)
 
-    kept: list[str] = []
+    kept: list[int] = []
     dropped = 0
-    for smi in pool_smiles:
+    for i, smi in enumerate(pool_smiles):
         scaf = scaffold_smiles(smi)
         if scaf is None or scaf in banned:
             dropped += 1
             continue
-        kept.append(smi)
+        kept.append(i)
     return kept, dropped
+
+
+def filter_pool_by_scaffold(pool_smiles: list[str], manifests: list[dict]) -> tuple[list[str], int]:
+    """Drop any pool molecule whose Bemis-Murcko scaffold appears in a val/test split.
+
+    Returns (kept, n_dropped). Thin wrapper over `filter_pool_indices` so the SMILES path and the
+    labeled path cannot drift apart on what counts as clean.
+    """
+    kept_idx, dropped = filter_pool_indices(pool_smiles, manifests)
+    return [pool_smiles[i] for i in kept_idx], dropped
 
 
 def load_moleculenet(name: str, root: str | Path = "data/raw"):
