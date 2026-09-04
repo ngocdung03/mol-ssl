@@ -7,9 +7,9 @@ so this forces the encoder to learn local chemical environments without using a 
 Only the encoder is pretrained. The prediction head is discarded and re-initialized for the
 downstream task, which is what makes the encoder weights transferable across property datasets.
 
-Scope note: this is the one SSL method implemented for the mid-September deadline
-(see docs/plans/mol-ssl-plan.md Phase 3). Contrastive, consistency, and pseudo-labeling remain
-stubs behind the same interface.
+Scope note: attribute masking was the first self-supervised method implemented here.
+Contrastive, consistency, and pseudo-labeling remain stubs behind the same interface;
+graph-level supervised pretraining is implemented in supervised_graph.py.
 """
 from __future__ import annotations
 

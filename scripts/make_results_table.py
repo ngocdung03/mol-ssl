@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 RESULTS = Path(__file__).resolve().parents[1] / "results"
 
-# Published scaffold-split numbers, cited not reproduced (see docs/plans/mol-ssl-plan.md).
+# Published scaffold-split numbers, cited not reproduced (see README.md, Method sources).
 # Source: Yang et al. 2019 (Chemprop, D-MPNN), MoleculeNet scaffold-split protocol.
 PUBLISHED = {
     ("Tox21", "auroc"): ("0.759", "Chemprop D-MPNN, Yang et al. 2019 (published, not reproduced)"),

@@ -1,6 +1,6 @@
 """Supervised training loop -- config-driven, seeded, ledger-logged.
 
-Design constraints that are not negotiable (CLAUDE.md hard rules):
+Design constraints that are not negotiable (see the methodological rules in README.md):
   * The split comes from a committed manifest and is always a scaffold split.
   * Model selection uses the validation split; the test split is touched exactly once, at the end.
   * The reported epoch is the early-stopping epoch, never the best test epoch.

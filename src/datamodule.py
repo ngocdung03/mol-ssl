@@ -16,10 +16,10 @@ ALLOWED_SPLIT = "scaffold"
 
 
 def require_scaffold_split(cfg: dict) -> str:
-    """Rule 1, enforced in code and not only in CLAUDE.md."""
+    """Rule 1 of the methodological rules in README.md, enforced in code."""
     split = cfg.get("split")
     if split is None:
-        raise ValueError("config has no 'split': refusing to guess (see CLAUDE.md rule 1)")
+        raise ValueError("config has no 'split': refusing to guess (see README.md, rule 1)")
     if split != ALLOWED_SPLIT:
         raise ValueError(f"split={split!r} forbidden; only {ALLOWED_SPLIT!r} is permitted")
     return split

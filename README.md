@@ -1,20 +1,94 @@
-# mol-ssl — how much does self-supervision buy you per label?
+# mol-ssl — what does pretraining contribute per label, measured honestly?
 
-Low-label molecular property prediction on scaffold-split MoleculeNet, measured with splits, seeds,
-and leakage controls that survive scrutiny.
+Low-label molecular property prediction on scaffold-split MoleculeNet, with splits, seeds and
+leakage controls built to survive scrutiny.
 
-The headline is a **null result**: on Tox21, attribute-mask pretraining does **not** produce a
-low-label advantage. Every gain below 100% labels sits inside the seed noise. That is reported
-here as the finding, because the question was "how much does pretraining buy per label", not
-"can we show pretraining winning".
+**The result depends on which level you pretrain at.** Node-level self-supervision (attribute
+masking) contributes nothing distinguishable from seed variation. Graph-level supervised
+pretraining clears the seed-noise threshold at every labelled fraction tested, and the advantage
+widens as labels become scarcer. The two contribute additively, with no detectable synergy.
 
-Alongside it is a **positive result that does not depend on self-supervision working**: random
-splitting inflates Tox21 AUROC by **+0.084**, which is larger than most method improvements the
-benchmark is used to argue about.
+For calibration: substituting a random split for a scaffold split on the same data and model
+inflates the same benchmark by **+0.084 AUROC**, larger than any pretraining effect measured here.
+The evaluation protocol governs the conclusion more strongly than the choice of objective.
 
-## The two findings
+**Short manuscript:** [docs/manuscript/manuscript.pdf](docs/manuscript/manuscript.pdf)
+([LaTeX source](docs/manuscript/manuscript.tex))
 
-### 1. Random splitting inflates Tox21 AUROC by 8.4 points
+---
+
+## Abstract
+
+Self-supervised pretraining is widely reported to improve molecular property prediction where
+labelled data are scarce, yet reported gains are frequently small relative to the variation
+introduced by seed and split selection. Whether such pretraining confers a genuine advantage
+therefore depends on the rigour of the evaluation applied to it. We evaluate node-level and
+graph-level pretraining on the Tox21 toxicity benchmark under a protocol fixed before any
+measurement: Bemis–Murcko scaffold splits that place unseen molecular frameworks in the test
+partition, pretraining corpora decontaminated against every held-out scaffold, repeated seeds at
+each level of supervision, and decision thresholds specified in advance. A complete two-factor
+design separates the contribution of each pretraining level and allows their interaction to be
+estimated rather than assumed. Node-level self-supervision yields no improvement distinguishable
+from seed variation, whereas graph-level supervised pretraining improves prediction at every level
+of supervision examined, with the largest advantage where labelled data are most limited. The two
+levels contribute additively, and no synergy between them is detectable. Substituting a random
+split for a scaffold split inflates the same benchmark by more than any pretraining effect this
+study measures, indicating that the evaluation protocol governs the conclusion more strongly than
+the choice of pretraining objective.
+
+---
+
+## The three findings
+
+### 1. Node-level against graph-level pretraining — the node × graph factorial
+
+Four conditions differing only in the encoder weights at the start of fine-tuning. Identical
+splits, seeds, labelled subsamples and hyperparameters throughout.
+4 conditions × 5 labelled fractions × 5 seeds = 100 fine-tuning runs.
+
+| Labelled fraction | n_train | none | node | graph | node + graph |
+|---|---|---|---|---|---|
+| 5%   | 313   | 0.6215 ± 0.0442 | 0.6368 ± 0.0277 | 0.6745 ± 0.0208 | **0.6936 ± 0.0307** |
+| 10%  | 626   | 0.6253 ± 0.0291 | 0.6631 ± 0.0316 | 0.6970 ± 0.0196 | **0.7168 ± 0.0118** |
+| 25%  | 1,564 | 0.6937 ± 0.0114 | 0.6879 ± 0.0181 | 0.7229 ± 0.0080 | **0.7300 ± 0.0138** |
+| 50%  | 3,129 | 0.7083 ± 0.0198 | 0.7194 ± 0.0073 | 0.7502 ± 0.0074 | **0.7554 ± 0.0120** |
+| 100% | 6,258 | 0.7293 ± 0.0063 | 0.7505 ± 0.0106 | 0.7571 ± 0.0120 | **0.7676 ± 0.0179** |
+
+![labelled fraction curve](results/label_budget_tox21_0903_1750_tox21_2x2_full.png)
+
+Differences from random initialisation, against the pre-registered thresholds:
+
+| Labelled fraction | node | graph | node + graph |
+|---|---|---|---|
+| 5%   | +0.0154   | +0.0530 \* | +0.0722 \* |
+| 10%  | +0.0377   | +0.0716 \*\* | +0.0914 \*\* |
+| 25%  | −0.0058   | +0.0292 \*\* | +0.0363 \*\* |
+| 50%  | +0.0110   | +0.0419 \* | +0.0470 \*\* |
+| 100% | +0.0212 \* | +0.0278 \*\* | +0.0384 \*\* |
+| **Clears 2 × pooled σ** | **0 of 5** | 3 of 5 | **4 of 5** |
+
+\* exceeds pooled seed σ · \*\* exceeds 2 × pooled seed σ · unmarked lies inside seed noise
+
+The primary comparison, nominated in advance — node + graph against none at full supervision —
+gives **+0.0384** with pooled σ 0.0190, clearing the adjusted threshold. The **interaction**,
+`node_graph − (graph + node) + none`, lies inside seed noise at all five labelled fractions with
+alternating sign: the two levels are additive. Applying the same contrast to Hu et al.'s own
+averages gives +0.2, also additive, so this replicates their data on that point.
+
+Full writeup: [results/FINDING_node_vs_graph.md](results/FINDING_node_vs_graph.md).
+Pre-registration, committed before the sweep ran:
+[results/PRECLAIM_node_vs_graph.md](results/PRECLAIM_node_vs_graph.md).
+
+### 2. Node-level pretraining alone shows no low-label advantage
+
+Measured twice, five weeks apart, agreeing within pooled σ at every labelled fraction (largest
+discrepancy 0.0096). The hypothesis was that the advantage would widen as labels shrink. It did
+not — with node-level pretraining alone, the only gap clearing the threshold is at *full*
+supervision, where self-supervision was expected to matter least.
+
+Full writeup: [results/FINDING_label_budget.md](results/FINDING_label_budget.md).
+
+### 3. Random splitting inflates Tox21 AUROC by 8.4 points
 
 Identical model, identical data, identical seeds — only the split changes.
 
@@ -25,113 +99,123 @@ Identical model, identical data, identical seeds — only the split changes.
 | **Inflation** | **+0.0843 ± 0.0140** |
 
 Positive on every seed (+0.066 to +0.102). A random split lets molecules sharing a scaffold land on
-both sides of the train/test boundary, so the model gets credit for recognizing chemotypes it
-trained on. Full writeup: [results/FINDING_split_inflation.md](results/FINDING_split_inflation.md).
+both sides of the train/test boundary, so the model receives credit for recognising chemotypes it
+trained on. Full writeup:
+[results/FINDING_split_inflation.md](results/FINDING_split_inflation.md).
 
-### 2. Pretraining shows no low-label advantage on Tox21
+## The leakage numbers worth knowing
 
-5 budgets × 2 arms × 5 seeds = 50 trainings. Both arms see the **same labeled subsample** at each
-budget; the only difference is whether the encoder was pretrained on 239k scaffold-filtered
-ZINC250k molecules.
+Both pretraining corpora were filtered against every downstream validation and test scaffold:
 
-| Label budget | n_train | Supervised | Pretrained | Delta | Verdict |
-|---|---|---|---|---|---|
-| 5% | 313 | 0.6310 ± 0.0276 | 0.6342 ± 0.0221 | +0.0032 | inside seed noise |
-| 10% | 626 | 0.6627 ± 0.0238 | 0.6672 ± 0.0205 | +0.0045 | inside seed noise |
-| 25% | 1564 | 0.6863 ± 0.0286 | 0.6784 ± 0.0197 | −0.0079 | inside seed noise |
-| 50% | 3129 | 0.7223 ± 0.0145 | 0.7227 ± 0.0090 | +0.0004 | inside seed noise |
-| 100% | 6258 | 0.7249 ± 0.0205 | 0.7502 ± 0.0107 | +0.0253 | exceeds seed noise |
+| Corpus | Input | Removed | Kept |
+|---|---|---|---|
+| ZINC250k (node-level) | 249,455 | **10,335 (4.14%)** | 239,120 |
+| PCBA (graph-level) | 437,927 | **18,809 (4.30%)** | 419,118 |
 
-![label budget curve](results/label_budget_tox21_0825_1756_tox21_sweep.png)
+A pretraining pipeline that skips this step trains on evaluation chemotypes, and the resulting
+difference cannot be attributed to transfer. Note that Hu et al. describe removing evaluation
+graphs from their graph-level supervised corpus but not from the two million molecules used at the
+node level.
 
-The hypothesis was that the advantage would widen as labels shrink. It did not — the only gap that
-clears the noise is at *full* labels, where self-supervision was expected to matter least. Full
-writeup, including why this is a result about the method rather than a broken harness:
-[results/FINDING_label_budget.md](results/FINDING_label_budget.md).
-
-## The leakage number worth knowing
-
-Filtering ZINC250k against every downstream validation and test scaffold removed **10,335 of
-249,455 molecules (4.14%)**. Those molecules share Bemis–Murcko scaffolds with the evaluation sets.
-A pretraining pipeline that skips this step trains on test chemotypes and can report a low-label
-"advantage" that this experiment does not find once the contamination is gone.
-
-Verified three ways: the filter itself, an in-pipeline re-check that refuses to write a dirty pool,
-and an independent post-hoc check on 20,000 random pool molecules against 2,881 banned
-scaffolds — 0 leaks.
+Verified by negative control: ten real Tox21 validation and test molecules inserted into a corpus
+are rejected with a non-zero exit status and no checkpoint written.
 
 ## Supervised baselines (scaffold split, 5 seeds)
 
-| Dataset | GINE (this work) | ECFP4+RF | Winner |
+| Dataset | GINE (this work) | ECFP4+RF | Stronger |
 |---|---|---|---|
 | Tox21 | **0.7383 ± 0.0098** AUROC | 0.6977 ± 0.0017 | GINE +0.041 |
 | Lipophilicity | **0.8254 ± 0.0332** RMSE | 1.0278 ± 0.0020 | GINE −0.202 |
 | BBBP | 0.6891 ± 0.0730 AUROC | **0.7971 ± 0.0072** | ECFP +0.108 |
 | BACE | 0.8199 ± 0.0260 AUROC | **0.9174 ± 0.0042** | ECFP +0.098 |
 
-The graph network wins the two larger datasets and **loses both smaller ones** — and on BBBP its
-seed spread (±0.073) is ten times the fingerprint's. A 5-layer GINE trained from scratch on ~1.5k
-molecules has more parameters than supervision. That is reported rather than hidden, and it is what
-makes the low-label question worth asking in the first place.
+The graph network is stronger on the two larger datasets and **weaker on both smaller ones** — and
+on BBBP its seed spread (±0.073) is ten times the fingerprint's. A five-layer GINE trained from
+scratch on roughly 1.5k molecules has more parameters than supervision. That is reported rather
+than hidden, and it is what makes the low-label question worth asking.
 
 Full table with published reference values: [results/RESULTS.md](results/RESULTS.md).
 
-## Non-negotiables, enforced in code
+## Methodological rules, enforced in code
 
 1. **Scaffold splits only.** `require_scaffold_split()` raises on a missing or random split, and
    there is no random-split function in [src/splits.py](src/splits.py). The random split used for
    the inflation study lives in a quarantined module whose manifests the production loader
    **refuses** to read.
-2. **The unlabeled pool is filtered before it touches disk**, and
+2. **Pretraining corpora are filtered before they touch disk**, and
    [tests/test_leakage.py](tests/test_leakage.py) **fails when the filter is disabled** — verified
    by mutation via [scripts/verify_leakage_teeth.sh](scripts/verify_leakage_teeth.sh), not by
-   assertion alone.
+   assertion alone. One mutation breaks both the unlabelled and the labelled-corpus test files.
 3. **No fabricated metrics.** Every number above is generated by
    [scripts/make_results_table.py](scripts/make_results_table.py), which reads only
    `results/metrics_{run_tag}.json` files produced by actual runs.
 4. **Fixed seeds, mean ± std over 5 seeds**, one row per run in `artifacts/experiments.csv`.
    Never a best epoch, never a best seed.
-5. **Claims written before the sweep.** The null result above is what that policy is for.
+5. **Claims written before the sweep.** See
+   [results/PRECLAIM_node_vs_graph.md](results/PRECLAIM_node_vs_graph.md), committed before any
+   value existed. A null result is reported as one.
 
 ## Reproduce
 
 ```bash
 conda env create -f environment.yml && conda activate molssl
-python -m pytest                                    # 51 tests
+python -m pytest                                    # 74 tests
 python scripts/make_splits.py                       # committed scaffold manifests
 python scripts/run_baseline.py --config configs/baseline_tox21_gine.yaml --kw tox21_sup
 python scripts/run_split_comparison.py --config configs/baseline_tox21_gine.yaml --kw splitgap
 ```
 
-For the full sweep, build the pool and pretrain first:
+The node × graph factorial, in order:
 
 ```bash
+# node-level: attribute masking on scaffold-filtered ZINC250k
 python scripts/build_pool.py --from-file data/raw/zinc250k.smi --kw pool
 python scripts/run_pretrain.py --pool data/pool/zinc250k_filtered.txt --kw pretrain
+
+# graph-level: supervised multi-task on scaffold-filtered PCBA (downloads ~15 MB)
+python scripts/run_pretrain_graph.py --kw pcba_graph --out artifacts/encoder_graph.pt
+
+# node then graph, Hu et al.'s sequential order
+python scripts/run_pretrain_graph.py --kw pcba_nodegraph \
+    --init-from artifacts/encoder_pretrained.pt --out artifacts/encoder_node_graph.pt
+
+# all four conditions, 100 fine-tuning runs
 python scripts/run_label_budget_sweep.py --config configs/labelbudget_tox21.yaml \
-    --checkpoint artifacts/encoder_pretrained.pt --kw sweep
+    --arms none,node,graph,node_graph \
+    --checkpoint node=artifacts/encoder_pretrained.pt \
+    --checkpoint graph=artifacts/encoder_graph.pt \
+    --checkpoint node_graph=artifacts/encoder_node_graph.pt --kw tox21_2x2
 ```
 
-Verified on 2× Tesla T4 (sm_75 — fp16/fp32 only, no bf16), CUDA 12.4, torch 2.6.0, PyG 2.6.1,
-RDKit 2024.09.6.
+Encoder checkpoints are not committed (`*.pt` is ignored); rerun the pretraining steps to
+regenerate them. Verified on 2× Tesla T4 (sm_75 — fp16/fp32 only, no bf16), CUDA 12.4, torch 2.6.0,
+PyG 2.6.1, RDKit 2024.09.6.
 
 ## Limitations
 
-- The null result covers **one dataset, one method, one pool**. Contrastive (MolCLR-style),
-  consistency regularization, and pseudo-labeling remain unimplemented stubs under `src/ssl/`.
-- Pretraining ran 20 epochs on a ~250k pool, capped by the T4 budget — well below the ChEMBL-scale
-  pretraining in the literature. A larger pool or longer schedule may behave differently.
-- Fine-tuning used one fixed learning rate for both arms. Tuning the pretrained arm alone is a
-  standard way to manufacture a difference, so it was not done.
-- The "exceeds seed noise" test compares a delta against pooled seed standard deviation. It is a
-  descriptive threshold, not a hypothesis test with multiplicity control across five budgets.
-- Numbers here are **not** directly comparable to published Chemprop values: this repo uses its own
-  deterministic Bemis–Murcko split, and split implementations differ in tie-handling and balancing
-  enough to shift test-set class balance materially (see
+- **One downstream dataset.** Tox21 only, against Hu et al.'s eight-dataset average. The
+  generality of the reversed main effects is untested.
+- **Corpus substitution.** PCBA (437,927 molecules, 128 assays) stands in for Hu et al.'s ChEMBL
+  (approximately 456,000 molecules, 1,310 assays). Molecule counts are comparable; task breadth is
+  roughly one tenth.
+- **The node-level corpus is eight times smaller** than theirs: 239,120 decontaminated ZINC250k
+  molecules against two million ZINC15 molecules. The node-level condition is under-trained
+  relative to theirs, and the absence of a measurable node-level effect here should not be read as
+  evidence that the objective is ineffective at scale.
+- One node-level objective is implemented. Context prediction, edge prediction and contrastive
+  objectives (MolCLR-style) remain unimplemented stubs under `src/ssl/`.
+- Pretraining ran 20 epochs at each stage, a schedule that was not tuned.
+- Fine-tuning used one fixed learning rate for all conditions. Tuning the pretrained conditions
+  alone is a standard way to manufacture a difference, so it was not done.
+- The 2 × pooled σ threshold is a pragmatic guard against multiplicity, not a hypothesis test.
+  Paired per-seed tests or a mixed model over seeds and labelled fractions would be preferable.
+- Numbers here are **not** directly comparable to published Chemprop values: this repository uses
+  its own deterministic Bemis–Murcko split, and split implementations differ in tie-handling and
+  balancing enough to shift test-set class balance materially (see
   [results/SPLIT_DIAGNOSTICS.md](results/SPLIT_DIAGNOSTICS.md)).
 
 ## Method sources
 
-Hu et al. 2020 (pretraining strategies for GNNs — the implemented method) · MolCLR (contrastive
-molecular representations) · Yang et al. 2019 (Chemprop D-MPNN, cited for reference values, not
-reproduced) · MoleculeNet benchmark protocol.
+Hu et al. 2020, *Strategies for Pre-training Graph Neural Networks* (both implemented pretraining
+levels) · MolCLR (contrastive molecular representations, not implemented) · Yang et al. 2019
+(Chemprop D-MPNN, cited for reference values, not reproduced) · MoleculeNet benchmark protocol.

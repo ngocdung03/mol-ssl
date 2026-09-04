@@ -1,4 +1,4 @@
-"""Config validation must refuse to guess. Every raise here is a rule from CLAUDE.md."""
+"""Config validation must refuse to guess. Every raise here is a rule from README.md."""
 import pytest
 import yaml
 

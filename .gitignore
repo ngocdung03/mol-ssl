@@ -8,3 +8,7 @@ wandb/
 *.pt
 .ipynb_checkpoints/
 data/pool/
+CLAUDE.md
+docs/plans/
+.claude/
+results/
