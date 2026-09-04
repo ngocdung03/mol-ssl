@@ -1,7 +1,8 @@
-# mol-ssl — what does pretraining contribute per label, measured honestly?
+# mol-ssl — what pretraining contributes per label, under scaffold-split evaluation
 
-Low-label molecular property prediction on scaffold-split MoleculeNet, with splits, seeds and
-leakage controls built to survive scrutiny.
+Low-label molecular property prediction on MoleculeNet, evaluated with Bemis-Murcko scaffold
+splits, five seeds at every labelled fraction, pretraining corpora decontaminated against every
+held-out scaffold, and decision thresholds fixed before measurement.
 
 **The result depends on which level you pretrain at.** Node-level self-supervision (attribute
 masking) contributes nothing distinguishable from seed variation. Graph-level supervised
@@ -103,7 +104,7 @@ both sides of the train/test boundary, so the model receives credit for recognis
 trained on. Full writeup:
 [results/FINDING_split_inflation.md](results/FINDING_split_inflation.md).
 
-## The leakage numbers worth knowing
+## Corpus decontamination
 
 Both pretraining corpora were filtered against every downstream validation and test scaffold:
 
@@ -132,7 +133,7 @@ are rejected with a non-zero exit status and no checkpoint written.
 The graph network is stronger on the two larger datasets and **weaker on both smaller ones** — and
 on BBBP its seed spread (±0.073) is ten times the fingerprint's. A five-layer GINE trained from
 scratch on roughly 1.5k molecules has more parameters than supervision. That is reported rather
-than hidden, and it is what makes the low-label question worth asking.
+than omitted, and it is what motivates the low-label question.
 
 Full table with published reference values: [results/RESULTS.md](results/RESULTS.md).
 
