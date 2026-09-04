@@ -55,7 +55,7 @@ splits, seeds, labelled subsamples and hyperparameters throughout.
 | 50%  | 3,129 | 0.7083 ± 0.0198 | 0.7194 ± 0.0073 | 0.7502 ± 0.0074 | **0.7554 ± 0.0120** |
 | 100% | 6,258 | 0.7293 ± 0.0063 | 0.7505 ± 0.0106 | 0.7571 ± 0.0120 | **0.7676 ± 0.0179** |
 
-![labelled fraction curve](results/label_budget_tox21_0903_1750_tox21_2x2_full.png)
+![labelled fraction curve](docs/manuscript/fig_labelled_fraction.png)
 
 Differences from random initialisation, against the pre-registered thresholds:
 
@@ -76,9 +76,8 @@ gives **+0.0384** with pooled σ 0.0190, clearing the adjusted threshold. The **
 alternating sign: the two levels are additive. Applying the same contrast to Hu et al.'s own
 averages gives +0.2, also additive, so this replicates their data on that point.
 
-Full writeup: [results/FINDING_node_vs_graph.md](results/FINDING_node_vs_graph.md).
-Pre-registration, committed before the sweep ran:
-[results/PRECLAIM_node_vs_graph.md](results/PRECLAIM_node_vs_graph.md).
+Run tag `0903_1750_tox21_2x2_full`. The hypotheses and thresholds were recorded before the
+sweep was executed; the full writeup and that pre-registration are reported in the manuscript.
 
 ### 2. Node-level pretraining alone shows no low-label advantage
 
@@ -87,7 +86,7 @@ discrepancy 0.0096). The hypothesis was that the advantage would widen as labels
 not — with node-level pretraining alone, the only gap clearing the threshold is at *full*
 supervision, where self-supervision was expected to matter least.
 
-Full writeup: [results/FINDING_label_budget.md](results/FINDING_label_budget.md).
+Run tags `0825_1756_tox21_sweep` and `0903_1750_tox21_2x2_full`.
 
 ### 3. Random splitting inflates Tox21 AUROC by 8.4 points
 
@@ -101,8 +100,7 @@ Identical model, identical data, identical seeds — only the split changes.
 
 Positive on every seed (+0.066 to +0.102). A random split lets molecules sharing a scaffold land on
 both sides of the train/test boundary, so the model receives credit for recognising chemotypes it
-trained on. Full writeup:
-[results/FINDING_split_inflation.md](results/FINDING_split_inflation.md).
+trained on. Run tag `0825_1641_tox21_splitgap`.
 
 ## Corpus decontamination
 
@@ -135,7 +133,7 @@ on BBBP its seed spread (±0.073) is ten times the fingerprint's. A five-layer G
 scratch on roughly 1.5k molecules has more parameters than supervision. That is reported rather
 than omitted, and it is what motivates the low-label question.
 
-Full table with published reference values: [results/RESULTS.md](results/RESULTS.md).
+Published Chemprop reference values are cited in the manuscript rather than reproduced.
 
 ## Methodological rules, enforced in code
 
@@ -153,8 +151,7 @@ Full table with published reference values: [results/RESULTS.md](results/RESULTS
 4. **Fixed seeds, mean ± std over 5 seeds**, one row per run in `artifacts/experiments.csv`.
    Never a best epoch, never a best seed.
 5. **Claims written before the sweep.** See
-   [results/PRECLAIM_node_vs_graph.md](results/PRECLAIM_node_vs_graph.md), committed before any
-   value existed. A null result is reported as one.
+   the pre-registration recorded before any value existed. A null result is reported as one.
 
 ## Reproduce
 
@@ -212,8 +209,7 @@ PyG 2.6.1, RDKit 2024.09.6.
   Paired per-seed tests or a mixed model over seeds and labelled fractions would be preferable.
 - Numbers here are **not** directly comparable to published Chemprop values: this repository uses
   its own deterministic Bemis–Murcko split, and split implementations differ in tie-handling and
-  balancing enough to shift test-set class balance materially (see
-  [results/SPLIT_DIAGNOSTICS.md](results/SPLIT_DIAGNOSTICS.md)).
+  balancing enough to shift test-set class balance materially.
 
 ## Method sources
 
