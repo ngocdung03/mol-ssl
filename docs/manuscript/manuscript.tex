@@ -77,8 +77,8 @@ design.
 
 All splits are Bemis--Murcko scaffold splits at proportions $0.8/0.1/0.1$,
 generated once and stored as a manifest that the training code loads rather than
-recomputes. The Tox21 dataset comprises $7823$ molecules across twelve assay
-tasks, partitioned into $6258$ training, $782$ validation and $783$ test
+recomputes. The Tox21 dataset comprises $7{,}823$ molecules across twelve assay
+tasks, partitioned into $6{,}258$ training, $782$ validation and $783$ test
 molecules. The split is deterministic and independent of seed, so the seed
 varies only the labelled subsample and the model initialisation. Random splits
 are not available to the training path; they are confined to a separate
@@ -134,13 +134,13 @@ condition and not another is a recognised route to a spurious difference.
 
 \subsection{Corpus decontamination}
 
-Node-level pretraining used ZINC250k. Of $249455$ molecules, $10335$
+Node-level pretraining used ZINC250k. Of $249{,}455$ molecules, $10{,}335$
 ($4.14\%$) shared a Bemis--Murcko scaffold with a downstream validation or test
-partition and were removed, leaving $239120$. Graph-level pretraining used
-PCBA. Of $437927$ molecules, $18809$ ($4.30\%$) were removed on the same
-criterion, leaving $419118$. Filtering was applied against the held-out
-scaffolds of all four downstream manifests, comprising $1565$ scaffolds for
-Tox21 and $3116$ in total.
+partition and were removed, leaving $239{,}120$. Graph-level pretraining used
+PCBA. Of $437{,}927$ molecules, $18{,}809$ ($4.30\%$) were removed on the same
+criterion, leaving $419{,}118$. Filtering was applied against the held-out
+scaffolds of all four downstream manifests, comprising $1{,}565$ scaffolds for
+Tox21 and $3{,}116$ in total.
 
 The filter is re-applied at the start of every pretraining run rather than
 trusted from the cached corpus, and a run whose corpus fails the check is
@@ -190,7 +190,7 @@ against which those effects should be read.
 \subsection{The node by graph factorial}
 
 Both pretraining stages converged. Node-level masking loss decreased from
-$0.1518$ to $0.0338$ over twenty epochs on $239120$ molecules. Graph-level
+$0.1518$ to $0.0338$ over twenty epochs on $239{,}120$ molecules. Graph-level
 assay loss decreased to $0.0364$ from random initialisation and to $0.0352$ when
 initialised from the node-level encoder. The three pretrained encoders were
 confirmed pairwise distinct, so no two conditions represent the same parameters
@@ -209,16 +209,17 @@ Labelled fraction & $n_{\mathrm{train}}$ & \texttt{none} & \texttt{node} & \text
 \midrule
 5\%   & 313  & $0.6215 \pm 0.0442$ & $0.6368 \pm 0.0277$ & $0.6745 \pm 0.0208$ & $0.6936 \pm 0.0307$ \\
 10\%  & 626  & $0.6253 \pm 0.0291$ & $0.6631 \pm 0.0316$ & $0.6970 \pm 0.0196$ & $0.7168 \pm 0.0118$ \\
-25\%  & 1564 & $0.6937 \pm 0.0114$ & $0.6879 \pm 0.0181$ & $0.7229 \pm 0.0080$ & $0.7300 \pm 0.0138$ \\
-50\%  & 3129 & $0.7083 \pm 0.0198$ & $0.7194 \pm 0.0073$ & $0.7502 \pm 0.0074$ & $0.7554 \pm 0.0120$ \\
-100\% & 6258 & $0.7293 \pm 0.0063$ & $0.7505 \pm 0.0106$ & $0.7571 \pm 0.0120$ & $0.7676 \pm 0.0179$ \\
+25\%  & 1,564 & $0.6937 \pm 0.0114$ & $0.6879 \pm 0.0181$ & $0.7229 \pm 0.0080$ & $0.7300 \pm 0.0138$ \\
+50\%  & 3,129 & $0.7083 \pm 0.0198$ & $0.7194 \pm 0.0073$ & $0.7502 \pm 0.0074$ & $0.7554 \pm 0.0120$ \\
+100\% & 6,258 & $0.7293 \pm 0.0063$ & $0.7505 \pm 0.0106$ & $0.7571 \pm 0.0120$ & $0.7676 \pm 0.0179$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:main} reports the four conditions. The combined condition attained
-the highest value at every labelled fraction. Table~\ref{tab:delta} reports the
-corresponding differences from random initialisation.
+Table~\ref{tab:main} and Figure~\ref{fig:curve} report the four conditions. The
+combined condition attained the highest value at every labelled fraction.
+Table~\ref{tab:delta} reports the corresponding differences from random
+initialisation.
 
 \begin{table}[htbp]
 \centering
@@ -243,6 +244,15 @@ Fractions exceeding $2\sigma_{\mathrm{pooled}}$ & 0 of 5 & 3 of 5 & 4 of 5 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.86\textwidth]{fig_labelled_fraction.png}
+\caption{Test AUROC on Tox21 against the labelled fraction of the scaffold
+training split, for the four pretraining conditions. Bands span one sample
+standard deviation.}
+\label{fig:curve}
+\end{figure}
 
 Three observations follow. First, node-level pretraining alone satisfied the
 adjusted criterion at none of the five labelled fractions, and at a labelled fraction of 25\% its
@@ -284,10 +294,10 @@ node-level masking contributed little.
 
 Several differences between the two studies could account for this reversal, and
 all are hypotheses rather than results. Scale is the most probable: Hu et al.
-pretrained at the node level on two million ZINC15 molecules, against $239120$
+pretrained at the node level on two million ZINC15 molecules, against $239{,}120$
 after decontamination in the present study, leaving the node-level encoder
 correspondingly less well trained. The graph-level corpora differ in kind, their
-ChEMBL panel spanning $1310$ broad biochemical assays against the $128$
+ChEMBL panel spanning $1{,}310$ broad biochemical assays against the $128$
 bioactivity screens of PCBA, which plausibly resemble the twelve Tox21 endpoints
 more closely and so transfer more effectively. Their figures are means over
 eight datasets, from which one dataset may depart without contradicting them;
@@ -307,11 +317,11 @@ effects under study.
 
 \subsection*{Limitations}
 
-The graph-level corpus is PCBA, comprising $437927$ molecules and $128$ assays,
+The graph-level corpus is PCBA, comprising $437{,}927$ molecules and $128$ assays,
 in place of the ChEMBL corpus of Hu et al., which contains approximately
-$456000$ molecules and $1310$ assays. Molecule counts are comparable; task
+$456{,}000$ molecules and $1{,}310$ assays. Molecule counts are comparable; task
 breadth is approximately one tenth. The node-level corpus is smaller by a larger
-margin: $239120$ decontaminated ZINC250k molecules against the two million
+margin: $239{,}120$ decontaminated ZINC250k molecules against the two million
 ZINC15 molecules of Hu et al. The node-level condition is therefore
 under-trained relative to theirs, and the absence of a measurable node-level
 effect in this study should not be read as evidence that the objective is
